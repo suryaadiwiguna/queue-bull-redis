@@ -1,6 +1,8 @@
 import express, { Request, Response } from 'express'
 import dotenv from 'dotenv'
 import Bull = require('bull')
+import { promisify } from 'util'
+const sleep = promisify(setTimeout)
 
 const app = express()
 dotenv.config()
@@ -13,13 +15,34 @@ const redisOptions: Bull.QueueOptions = {
 //DEFINE QUEUE
 const burgerQueue = new Bull("burger", redisOptions)
 
-//REGISTER QUEUE
-burgerQueue.process((payload, done) => {
-    console.log('Preparing the burger')
-    setTimeout(() => {
-        console.log("Burger ready!")
+//REGISTER PROCESSOR
+burgerQueue.process(async (payload, done) => {
+    try {
+        console.log('Preparing the burger')
+        //STEP 1
+        payload.log("Grill the patty.")
+        payload.progress(20)
+        await sleep(5000)
+        //STEP 2
+        payload.log("Toast the buns.")
+        payload.progress(40)
+        await sleep(5000)
+        //STEP 3
+        payload.log("Add toppings.")
+        payload.progress(60)
+        await sleep(5000)
+        //STEP 4
+        payload.log("")
+        payload.log("Assemble layers.")
+        payload.progress(80)
+        await sleep(5000)
+        //STEP 5
+        payload.log("Burger's ready.")
+        payload.progress(100)
         done()
-    }, 4000)
+    } catch (error) {
+        done(error as Error)
+    }
 })
 
 //ADD JOB TO THE QUEUE
